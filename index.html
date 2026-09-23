@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Private Landing Page Studio</title>
+  <meta name="description" content="Create unlisted product curations. Lock your posts with a 4–6 digit code to prevent unauthorized edits or deletion." />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- External Libraries: Supabase, Lucide Icons, Canvas Confetti, DOMPurify, Marked -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.4/dist/confetti.browser.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <link rel="stylesheet" href="/style.css" />
+</head>
+
+<body class="bg-[#fcfcfc] text-neutral-900 min-h-screen flex flex-col font-sans selection:bg-neutral-900 selection:text-white">
+
+  <!-- =========================================================================
+       TOP GLOBAL NAVBAR
+       ========================================================================= -->
+  <header id="app-navbar" class="bg-white border-b border-neutral-200 px-6 py-3.5 flex items-center justify-between sticky top-0 z-40">
+    <div class="flex items-center gap-3">
+      <!-- Brand Logo -->
+      <button id="nav-brand-btn" class="flex items-center gap-2.5 text-left focus:outline-none group">
+        <div class="w-8 h-8 rounded-lg bg-neutral-900 flex items-center justify-center text-white shadow-sm">
+          <i data-lucide="globe" class="w-4 h-4"></i>
+        </div>
+        <span class="font-bold text-sm text-neutral-900">Landing Studio</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- =========================================================================
+       VIEW 1: DASHBOARD
+       ========================================================================= -->
+  <main id="view-dashboard" class="flex-1 max-w-6xl w-full mx-auto px-6 py-8">
+    
+    <!-- Title & Action Header -->
+    <div class="flex items-center justify-end gap-4 mb-6">
+      <button id="btn-dashboard-create-post" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-medium transition active:scale-95 shadow-sm whitespace-nowrap">
+        <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+        <span>Create New Post</span>
+      </button>
+    </div>
+
+    <!-- Stat Cards Row -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+      
+      <!-- Total Posts -->
+      <div class="ui-card p-4">
+        <div class="flex items-center justify-between text-neutral-500 mb-2">
+          <span class="text-xs font-medium">Total Posts</span>
+          <i data-lucide="file-text" class="w-4 h-4 text-neutral-400"></i>
+        </div>
+        <p id="stat-total-posts" class="text-2xl font-bold text-neutral-900">0</p>
+      </div>
+
+      <!-- Total Views -->
+      <div class="ui-card p-4">
+        <div class="flex items-center justify-between text-neutral-500 mb-2">
+          <span class="text-xs font-medium">Total Views</span>
+          <i data-lucide="eye" class="w-4 h-4 text-neutral-400"></i>
+        </div>
+        <p id="stat-total-views" class="text-2xl font-bold text-neutral-900">0</p>
+      </div>
+
+      <!-- Product Clicks -->
+      <div class="ui-card p-4">
+        <div class="flex items-center justify-between text-neutral-500 mb-2">
+          <span class="text-xs font-medium">Product Clicks</span>
+          <i data-lucide="mouse-pointer" class="w-4 h-4 text-neutral-400"></i>
+        </div>
+        <div class="flex items-baseline justify-between">
+          <p id="stat-product-clicks" class="text-2xl font-bold text-neutral-900">0</p>
+          <span class="text-[10px] text-neutral-400">store link clicks</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Posts Grid -->
+    <div id="dashboard-posts-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <!-- Injected by JavaScript -->
+    </div>
+
+    <!-- Empty State (Matches Screenshot 6) -->
+    <div id="dashboard-empty-box" class="ui-dashed-box py-16 px-6 text-center max-w-2xl mx-auto my-6">
+      <div class="w-12 h-12 mx-auto rounded-full bg-neutral-100 flex items-center justify-center text-neutral-400 mb-4">
+        <i data-lucide="globe" class="w-6 h-6 stroke-[1.5]"></i>
+      </div>
+      <h3 class="text-sm font-bold text-neutral-900 mb-1.5">No posts created yet</h3>
+      <p class="text-xs text-neutral-500 max-w-md mx-auto mb-5 leading-relaxed">
+        Create your first post with images and named product links. You can optionally set a 4–6 digit PIN to lock it.
+      </p>
+      <button id="btn-create-first-post" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-medium transition active:scale-95 shadow-sm">
+        <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+        <span>Create First Post</span>
+      </button>
+    </div>
+
+  </main>
+
+  <!-- =========================================================================
+       VIEW 2: CREATE / EDIT LANDING PAGE (Matches Screenshots 2, 3, 4, 5)
+       ========================================================================= -->
+  <main id="view-editor" class="hidden flex-1 max-w-5xl w-full mx-auto px-6 py-8">
+    
+    <!-- Top Subheader Toolbar -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 mb-6 border-b border-neutral-200">
+      <div class="flex items-center gap-3">
+        <button id="btn-editor-back" class="p-1 text-neutral-500 hover:text-neutral-900 transition" title="Back">
+          <i data-lucide="arrow-left" class="w-5 h-5"></i>
+        </button>
+        <h2 id="editor-page-heading" class="text-lg font-bold text-neutral-900">Create Landing Page</h2>
+      </div>
+
+      <div class="flex items-center gap-2.5">
+        <button id="btn-editor-preview" type="button" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-white border border-neutral-200 hover:bg-neutral-50 text-neutral-700 text-xs font-medium transition active:scale-95 shadow-sm">
+          <i data-lucide="eye" class="w-3.5 h-3.5 text-neutral-500"></i>
+          <span>Preview</span>
+        </button>
+
+        <button id="btn-editor-save-draft" type="button" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-white border border-neutral-200 hover:bg-neutral-50 text-neutral-700 text-xs font-medium transition active:scale-95 shadow-sm">
+          <i data-lucide="bookmark" class="w-3.5 h-3.5 text-neutral-500"></i>
+          <span>Save Draft</span>
+        </button>
+
+        <button id="btn-editor-activate-public" type="button" class="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-medium transition active:scale-95 shadow-sm">
+          <i data-lucide="globe" class="w-3.5 h-3.5 text-emerald-400"></i>
+          <span>Activate Public Link</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Form Content Stack -->
+    <div class="space-y-6">
+
+      <!-- Section: 4-6 Digit Lock Code (PIN) - Moved to Top -->
+      <div class="ui-card p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white">
+        <div class="flex items-start gap-3">
+          <div class="w-9 h-9 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-600 shrink-0 mt-0.5">
+            <i data-lucide="key" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-xs font-bold text-neutral-900">4–6 Digit Lock Code (PIN)</span>
+              <span id="pin-lock-status-badge" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-600 text-[10px] font-medium border border-neutral-200">
+                <i data-lucide="lock-open" class="w-2.5 h-2.5 text-neutral-500"></i>
+                <span id="pin-lock-status-text">Open to Anyone</span>
+              </span>
+            </div>
+            <p class="text-xs text-neutral-500 leading-relaxed max-w-xl">
+              Lock your post with a 4–6 digit number so only you (or someone with the code) can edit, delete, or obtain its unlisted public link. Leave blank to let anyone edit or delete.
+            </p>
+          </div>
+        </div>
+
+        <div class="shrink-0 w-full md:w-56 flex items-center gap-1.5">
+          <div class="relative flex-1">
+            <input 
+              id="editor-input-pin"
+              type="password"
+              inputmode="numeric"
+              maxlength="6"
+              placeholder="PIN (4-6 digits)" 
+              class="w-full pl-3 pr-7 py-2 bg-white border border-neutral-200 rounded-lg text-xs font-mono text-center tracking-widest text-neutral-900 focus:outline-none focus:border-neutral-900 transition"
+            />
+            <button type="button" id="btn-toggle-editor-pin" class="absolute right-2 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 p-0.5" title="Show/Hide PIN">
+              <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+          <button type="button" id="btn-clear-editor-pin" class="px-2 py-2 rounded-lg border border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-500 hover:text-rose-600 text-xs transition shrink-0" title="Remove PIN">
+            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Section: PAGE TITLE -->
+      <div>
+        <label class="block text-xs font-bold text-neutral-600 uppercase tracking-wider mb-2">
+          PAGE TITLE
+        </label>
+        <input 
+          id="editor-input-title"
+          type="text" 
+          placeholder="Write your title... (e.g. Summer Clothing Picks)" 
+          class="w-full px-4 py-3 bg-white border border-neutral-200 rounded-xl text-base text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-neutral-900 transition shadow-sm"
+        />
+        <input id="editor-input-slug" type="hidden" />
+      </div>
+
+      <!-- Section: BODY TEXT (Matches Screenshot 5) -->
+      <div>
+        <label class="block text-xs font-bold text-neutral-600 uppercase tracking-wider mb-2">
+          BODY TEXT
+        </label>
+        <div class="ui-card overflow-hidden bg-white shadow-sm">
+          <!-- Formatting Toolbar -->
+          <div class="px-3 py-2 border-b border-neutral-200 flex items-center justify-between text-neutral-600 text-xs bg-neutral-50/50">
+            <div class="flex items-center gap-2">
+              <button type="button" data-toolbar="bold" class="p-1 hover:text-neutral-900 hover:bg-neutral-200/60 rounded font-bold" title="Bold">B</button>
+              <button type="button" data-toolbar="italic" class="p-1 hover:text-neutral-900 hover:bg-neutral-200/60 rounded italic" title="Italic">I</button>
+              <span class="w-px h-3.5 bg-neutral-200"></span>
+              <button type="button" data-toolbar="h2" class="p-1 hover:text-neutral-900 hover:bg-neutral-200/60 rounded font-semibold" title="Heading 2">H2</button>
+              <button type="button" data-toolbar="h3" class="p-1 hover:text-neutral-900 hover:bg-neutral-200/60 rounded font-semibold" title="Heading 3">H3</button>
+              <span class="w-px h-3.5 bg-neutral-200"></span>
+              <button type="button" data-toolbar="ul" class="p-1 hover:text-neutral-900 hover:bg-neutral-200/60 rounded" title="Bullet List">
+                <i data-lucide="list" class="w-3.5 h-3.5"></i>
+              </button>
+              <button type="button" data-toolbar="ol" class="p-1 hover:text-neutral-900 hover:bg-neutral-200/60 rounded" title="Numbered List">
+                <i data-lucide="list-ordered" class="w-3.5 h-3.5"></i>
+              </button>
+              <button type="button" data-toolbar="quote" class="p-1 hover:text-neutral-900 hover:bg-neutral-200/60 rounded" title="Quote">
+                <i data-lucide="quote" class="w-3.5 h-3.5"></i>
+              </button>
+              <button type="button" data-toolbar="link" class="p-1 hover:text-neutral-900 hover:bg-neutral-200/60 rounded" title="Insert Link">
+                <i data-lucide="link" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+
+            <div>
+              <button type="button" id="btn-toolbar-undo" class="p-1 hover:text-neutral-900 hover:bg-neutral-200/60 rounded" title="Undo">
+                <i data-lucide="undo" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Textarea -->
+          <textarea 
+            id="editor-input-body" 
+            rows="5"
+            placeholder="Write an editorial description, styling notes, or story behind this curation..."
+            class="w-full p-4 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none resize-y"
+          ></textarea>
+        </div>
+      </div>
+
+      <!-- Section: IMAGES (0) (Matches Screenshot 4) -->
+      <div>
+        <div class="mb-2">
+          <label class="block text-xs font-bold text-neutral-600 uppercase tracking-wider">
+            IMAGES (<span id="editor-images-counter">0</span>)
+          </label>
+          <p class="text-xs text-neutral-500 mt-0.5">
+            Drag images around to reorder them and connect each to an external product link.
+          </p>
+        </div>
+
+        <!-- Upload Drop Zone (Matches Screenshot 4) -->
+        <label id="editor-dropzone" class="ui-dashed-box p-8 text-center block cursor-pointer hover:border-neutral-400 transition mb-4">
+          <input id="editor-file-input" type="file" accept="image/*" class="sr-only" multiple />
+          <div class="w-10 h-10 mx-auto rounded-full bg-neutral-100 flex items-center justify-center text-neutral-600 mb-2">
+            <i data-lucide="upload" class="w-5 h-5"></i>
+          </div>
+          <h4 class="text-xs font-bold text-neutral-900 mb-1">Upload images</h4>
+          <p class="text-[11px] text-neutral-500">
+            Drag & drop images here or click to browse. Supports JPG, PNG, WEBP up to 15MB each.
+          </p>
+        </label>
+
+        <!-- Image Thumbnails Grid -->
+        <div id="editor-images-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <!-- Injected via JavaScript -->
+        </div>
+      </div>
+
+      <!-- Section: PRODUCT LINKS (Matches Screenshots 2 & 3) -->
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <div>
+            <label class="block text-xs font-bold text-neutral-600 uppercase tracking-wider">
+              PRODUCT LINKS
+            </label>
+            <p class="text-xs text-neutral-500 mt-0.5">
+              Manage the destination links you want visitors to access when clicking "Wanna buy?".
+            </p>
+          </div>
+
+          <div class="flex items-center gap-2 flex-wrap justify-end">
+            <button id="btn-auto-link-order" type="button" class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-medium transition shadow-sm" title="Link images and links according to their current order on screen">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-300"></i>
+              <span>Auto-Link by Order</span>
+            </button>
+
+            <button id="btn-toggle-collapse-links" type="button" class="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white border border-neutral-200 hover:bg-neutral-50 text-neutral-700 text-xs font-medium transition shadow-sm">
+              <i data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-neutral-500"></i>
+              <span id="toggle-collapse-links-text">Collapse All</span>
+            </button>
+
+            <span class="px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-600 text-[11px] font-mono border border-neutral-200">
+              Links: <span id="counter-links-badge">0</span>
+            </span>
+            <span class="px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-600 text-[11px] font-mono border border-neutral-200">
+              Images linked: <span id="counter-images-linked-badge">0 / 0</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Search links bar -->
+        <div id="editor-links-search-wrapper" class="relative mb-4">
+          <i data-lucide="search" class="w-3.5 h-3.5 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+          <input 
+            id="editor-search-links-input"
+            type="text" 
+            placeholder="Search links by name or URL..." 
+            class="w-full pl-8 pr-3 py-1.5 bg-white border border-neutral-200 rounded-lg text-xs text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-neutral-900"
+          />
+        </div>
+
+        <!-- Links List -->
+        <div id="editor-links-container" class="space-y-3">
+          <!-- Injected via JavaScript -->
+        </div>
+
+        <!-- Empty State for Links (Matches Screenshot 3) -->
+        <div id="editor-links-empty" class="ui-dashed-box py-10 px-4 text-center">
+          <div class="w-10 h-10 mx-auto rounded-full bg-neutral-100 flex items-center justify-center text-neutral-400 mb-3">
+            <i data-lucide="link" class="w-5 h-5"></i>
+          </div>
+          <h4 class="text-xs font-bold text-neutral-900 mb-1">No links added yet</h4>
+          <p class="text-[11px] text-neutral-500 max-w-sm mx-auto mb-4">
+            Add external product links individually or paste a raw list of names and URLs.
+          </p>
+          <div class="flex items-center justify-center gap-2">
+            <button id="btn-empty-paste-links" type="button" class="px-3 py-1.5 rounded-lg bg-white border border-neutral-200 hover:bg-neutral-50 text-neutral-700 text-xs font-medium transition shadow-sm">
+              Paste Links
+            </button>
+            <button id="btn-empty-add-link" type="button" class="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-medium transition shadow-sm">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+              <span>Add Link</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- End of Editor Sections -->
+    </div>
+  </main>
+
+  <!-- Image Picker Modal (For linking a product link to multi images) -->
+  <div id="modal-link-image" class="fixed inset-0 z-50 hidden bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white border border-neutral-200 rounded-xl max-w-lg w-full p-5 shadow-2xl">
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="text-sm font-bold text-neutral-900">Connect Images to Link</h3>
+        <button id="btn-close-link-image-modal" class="p-1 rounded text-neutral-400 hover:text-neutral-700 transition">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <p class="text-xs text-neutral-500 mb-3">Click one or multiple images to connect or disconnect them from this link:</p>
+      
+      <div id="modal-link-image-grid" class="grid grid-cols-3 sm:grid-cols-4 gap-2.5 max-h-72 overflow-y-auto p-1 mb-4">
+        <!-- Injected via JavaScript -->
+      </div>
+
+      <div class="flex items-center justify-between pt-3 border-t border-neutral-100">
+        <button id="btn-clear-link-images" type="button" class="px-3 py-1.5 rounded-lg bg-neutral-50 hover:bg-neutral-100 text-xs font-medium text-rose-600 transition">
+          Unlink All
+        </button>
+        <div class="flex items-center gap-2">
+          <button id="btn-cancel-link-image" type="button" class="px-3.5 py-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-xs font-medium text-white transition shadow-sm">
+            Done
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       VIEW 3: PUBLIC UNLISTED PAGE VIEW
+       ========================================================================= -->
+  <div id="view-public" class="hidden min-h-screen bg-[#fcfcfc] flex flex-col">
+    
+    <!-- Floating Back to Studio -->
+    <div class="fixed top-4 left-4 z-50">
+      <button id="btn-public-back-studio" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white text-neutral-800 border border-neutral-200 text-xs font-medium shadow-md hover:bg-neutral-50 transition">
+        <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+        <span>Studio</span>
+      </button>
+    </div>
+
+    <!-- Passcode Lock Screen -->
+    <div id="public-lock-screen" class="hidden flex-1 flex items-center justify-center px-4 py-12">
+      <div class="ui-card max-w-sm w-full p-8 rounded-2xl text-center bg-white shadow-xl">
+        <div class="w-12 h-12 mx-auto rounded-full bg-neutral-100 flex items-center justify-center text-neutral-800 mb-4">
+          <i data-lucide="lock" class="w-5 h-5"></i>
+        </div>
+
+        <h3 id="lock-screen-title" class="text-base font-bold text-neutral-900 mb-1">Protected Post</h3>
+        <p class="text-xs text-neutral-500 mb-6">Enter the 4–6 digit PIN to unlock this curation.</p>
+
+        <!-- PIN Dots -->
+        <div id="pin-dots-container" class="flex items-center justify-center gap-3 mb-6">
+          <div class="pin-dot"></div>
+          <div class="pin-dot"></div>
+          <div class="pin-dot"></div>
+          <div class="pin-dot"></div>
+        </div>
+
+        <input id="hidden-pin-input" type="password" inputmode="numeric" pattern="[0-9]*" class="sr-only" autofocus />
+
+        <!-- Numeric Keypad -->
+        <div class="grid grid-cols-3 gap-2.5 max-w-[210px] mx-auto mb-3">
+          <button type="button" class="keypad-btn" data-key="1">1</button>
+          <button type="button" class="keypad-btn" data-key="2">2</button>
+          <button type="button" class="keypad-btn" data-key="3">3</button>
+          <button type="button" class="keypad-btn" data-key="4">4</button>
+          <button type="button" class="keypad-btn" data-key="5">5</button>
+          <button type="button" class="keypad-btn" data-key="6">6</button>
+          <button type="button" class="keypad-btn" data-key="7">7</button>
+          <button type="button" class="keypad-btn" data-key="8">8</button>
+          <button type="button" class="keypad-btn" data-key="9">9</button>
+          <button type="button" class="keypad-btn text-xs text-neutral-400" data-key="clear">Clear</button>
+          <button type="button" class="keypad-btn" data-key="0">0</button>
+          <button type="button" class="keypad-btn text-xs text-neutral-900" data-key="enter">⏎</button>
+        </div>
+
+        <p id="lock-error-message" class="text-xs text-rose-500 font-medium h-4"></p>
+      </div>
+    </div>
+
+    <!-- Unlocked Public Content Screen -->
+    <div id="public-content-screen" class="hidden flex-1 max-w-2xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-12 flex flex-col">
+      <div class="text-center mb-6 sm:mb-8">
+        <h1 id="public-page-title" class="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-900 mb-2.5"></h1>
+        <div id="public-page-description" class="text-xs sm:text-sm leading-relaxed text-neutral-600 prose prose-neutral max-w-lg mx-auto"></div>
+      </div>
+
+      <!-- Images Gallery -->
+      <div id="public-gallery-wrapper" class="hidden mb-8 w-full">
+        <div id="public-gallery-grid" class="w-full"></div>
+      </div>
+
+      <!-- Product Links -->
+      <div id="public-links-list" class="space-y-3 mb-10 w-full"></div>
+
+      <footer class="mt-auto text-center pt-8 border-t border-neutral-200">
+        <p class="text-[11px] text-neutral-400">Landing Studio • Standalone Curations</p>
+      </footer>
+    </div>
+
+  </div>
+
+  <!-- =========================================================================
+       MODALS: PASTE LINKS (BULK IMPORTER) & PREVIEW
+       ========================================================================= -->
+  <div id="modal-paste-links" class="fixed inset-0 z-50 hidden bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white border border-neutral-200 rounded-xl max-w-md w-full p-5 shadow-2xl">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-sm font-bold text-neutral-900">Paste Links</h3>
+        <button id="btn-close-paste-modal" class="p-1 rounded text-neutral-400 hover:text-neutral-700 transition">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <p class="text-xs text-neutral-500 mb-2">Paste raw links or name + link per line:</p>
+      <textarea 
+        id="textarea-paste-links" 
+        rows="6" 
+        placeholder="https://shop.example.com/item1&#10;Blue Linen Shirt: https://brand.com/shirt" 
+        class="w-full px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-lg text-xs font-mono text-neutral-900 focus:outline-none focus:border-neutral-900 mb-3"
+      ></textarea>
+      <div class="flex items-center justify-end gap-2">
+        <button id="btn-cancel-paste" type="button" class="px-3 py-1.5 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-xs font-medium text-neutral-700 transition">
+          Cancel
+        </button>
+        <button id="btn-submit-paste" type="button" class="px-3.5 py-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-medium transition">
+          Import Links
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Activated Public Link Success Dialog -->
+  <div id="modal-activated-link" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white border border-neutral-200 rounded-2xl max-w-md w-full p-6 shadow-2xl text-center">
+      <div class="w-12 h-12 mx-auto rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 mb-3">
+        <i data-lucide="check-circle" class="w-6 h-6"></i>
+      </div>
+      <h3 class="text-base font-bold text-neutral-900 mb-1">Public Link Activated!</h3>
+      <p class="text-xs text-neutral-500 mb-4">
+        Your unlisted curation is live. Anyone with this link (and PIN if set) can view it.
+      </p>
+
+      <div class="p-3 bg-neutral-50 border border-neutral-200 rounded-xl flex items-center justify-between gap-2 mb-4 text-left">
+        <div class="overflow-hidden flex-1">
+          <p class="text-[10px] uppercase font-bold text-neutral-400">Shareable URL</p>
+          <p id="activated-link-url" class="text-xs font-mono text-neutral-900 truncate select-all">https://...</p>
+        </div>
+        <button id="btn-copy-activated-link" type="button" class="px-3 py-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-medium shrink-0 transition flex items-center gap-1 shadow-sm">
+          <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+          <span id="btn-copy-activated-link-text">Copy</span>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2">
+        <button id="btn-visit-activated-link" type="button" class="w-full py-2 px-3 rounded-lg border border-neutral-200 hover:bg-neutral-50 text-neutral-800 text-xs font-medium transition flex items-center justify-center gap-1.5 shadow-sm">
+          <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+          <span>View Public Page</span>
+        </button>
+        <button id="btn-close-activated-modal" type="button" class="w-full py-2 px-3 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-700 text-xs font-medium transition">
+          Go to Dashboard
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Enter PIN to Edit -->
+  <div id="modal-pin-prompt" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white border border-neutral-200 rounded-2xl max-w-sm w-full p-6 shadow-2xl text-center relative">
+      <div class="w-12 h-12 mx-auto rounded-full bg-amber-50 text-amber-600 flex items-center justify-center mb-3">
+        <i data-lucide="lock" class="w-6 h-6"></i>
+      </div>
+      <h3 class="text-base font-bold text-neutral-900 mb-1">Enter PIN to Edit</h3>
+      <p id="pin-prompt-subtitle" class="text-xs text-neutral-500 mb-4">
+        This curation is locked. Enter the 4–6 digit PIN to edit.
+      </p>
+
+      <form id="form-pin-prompt" class="space-y-4">
+        <div class="relative">
+          <input 
+            id="input-prompt-pin" 
+            type="password" 
+            inputmode="numeric" 
+            maxlength="6" 
+            placeholder="••••" 
+            autocomplete="off"
+            class="w-full text-center tracking-[0.3em] font-mono text-xl py-2.5 px-4 rounded-xl border border-neutral-200 focus:outline-none focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition"
+          />
+          <button type="button" id="btn-toggle-prompt-pin-visibility" class="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 p-1" title="Show/Hide">
+            <i data-lucide="eye" class="w-4 h-4"></i>
+          </button>
+        </div>
+        
+        <p id="pin-prompt-error" class="text-xs text-rose-500 hidden font-medium">Incorrect PIN. Please try again.</p>
+
+        <div class="grid grid-cols-2 gap-2 pt-2">
+          <button type="button" id="btn-cancel-pin-prompt" class="w-full py-2 px-3 rounded-lg border border-neutral-200 hover:bg-neutral-50 text-neutral-700 text-xs font-medium transition">
+            Cancel
+          </button>
+          <button type="submit" id="btn-submit-pin-prompt" class="w-full py-2 px-3 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-medium transition shadow-sm">
+            Unlock & Edit
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Custom Delete Confirmation (Works 100% in iframes) -->
+  <div id="modal-confirm-delete" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white border border-neutral-200 rounded-2xl max-w-sm w-full p-6 shadow-2xl text-center relative">
+      <div class="w-12 h-12 mx-auto rounded-full bg-rose-50 text-rose-600 flex items-center justify-center mb-3">
+        <i data-lucide="trash-2" class="w-6 h-6"></i>
+      </div>
+      <h3 class="text-base font-bold text-neutral-900 mb-1">Delete Post?</h3>
+      <p id="delete-confirm-subtitle" class="text-xs text-neutral-500 mb-4 leading-relaxed">
+        Are you sure you want to permanently delete this post? This action cannot be undone.
+      </p>
+
+      <div id="delete-pin-container" class="hidden mb-4 text-left">
+        <label class="block text-[11px] font-semibold text-neutral-600 mb-1">PIN Protected: Enter Post PIN to Confirm</label>
+        <div class="relative">
+          <input 
+            id="input-delete-pin" 
+            type="password" 
+            inputmode="numeric" 
+            maxlength="6" 
+            placeholder="Enter 4-6 digit PIN" 
+            autocomplete="off"
+            class="w-full text-center tracking-[0.2em] font-mono py-2 px-3 rounded-lg border border-neutral-200 text-sm focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 transition"
+          />
+        </div>
+        <p id="delete-pin-error" class="text-[11px] text-rose-500 hidden mt-1">Incorrect PIN</p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2">
+        <button type="button" id="btn-cancel-delete" class="w-full py-2 px-3 rounded-lg border border-neutral-200 hover:bg-neutral-50 text-neutral-700 text-xs font-medium transition">
+          Cancel
+        </button>
+        <button type="button" id="btn-confirm-delete-action" class="w-full py-2 px-3 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-medium transition flex items-center justify-center gap-1.5 shadow-sm">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          <span>Delete Post</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Image Lightbox Viewer (WhatsApp-style full gallery view) -->
+  <div id="modal-image-lightbox" class="fixed inset-0 z-50 hidden bg-black/90 backdrop-blur-md flex flex-col justify-between p-4 sm:p-6 select-none">
+    <div class="flex items-center justify-between text-white/80 z-10">
+      <div id="lightbox-counter" class="text-xs font-mono tracking-wider">1 / 1</div>
+      <div class="flex items-center gap-3">
+        <a id="lightbox-product-link" href="#" target="_blank" rel="noopener noreferrer" class="hidden items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-neutral-900 text-xs font-semibold hover:bg-neutral-100 transition shadow">
+          <span>Wanna buy?</span>
+          <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i>
+        </a>
+        <button id="btn-close-lightbox" type="button" class="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Center Display -->
+    <div class="relative flex-1 flex items-center justify-center my-4 overflow-hidden">
+      <button id="btn-lightbox-prev" type="button" class="absolute left-2 sm:left-4 z-10 p-2.5 rounded-full bg-black/50 hover:bg-black/80 text-white/90 transition backdrop-blur-sm">
+        <i data-lucide="chevron-left" class="w-5 h-5"></i>
+      </button>
+
+      <img id="lightbox-main-img" src="" alt="" class="max-h-[75vh] max-w-full rounded-xl object-contain shadow-2xl transition-all duration-200">
+
+      <button id="btn-lightbox-next" type="button" class="absolute right-2 sm:right-4 z-10 p-2.5 rounded-full bg-black/50 hover:bg-black/80 text-white/90 transition backdrop-blur-sm">
+        <i data-lucide="chevron-right" class="w-5 h-5"></i>
+      </button>
+    </div>
+
+    <!-- Bottom Caption & Thumbnails -->
+    <div class="max-w-xl w-full mx-auto text-center space-y-3 z-10">
+      <p id="lightbox-caption" class="text-xs text-white/80 truncate font-medium"></p>
+      <div id="lightbox-thumbs" class="flex items-center justify-center gap-2 overflow-x-auto py-1 px-2"></div>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <!-- Pure JavaScript Client -->
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
