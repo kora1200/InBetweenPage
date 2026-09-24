@@ -1633,7 +1633,19 @@ function attachEvents() {
   const firstCreateBtn = document.getElementById('btn-create-first-post');
   [topCreateBtn, dashCreateBtn, firstCreateBtn].forEach(b => {
     if (b) {
-      b.addEventListener('click', () => switchView('editor', { post: null }));
+      b.addEventListener('click', (e) => {
+        e.preventDefault();
+        switchView('editor', { post: null });
+      });
+    }
+  });
+
+  // Global document click delegation fallback for create buttons (guarantees click works anywhere)
+  document.addEventListener('click', (e) => {
+    const createBtn = e.target.closest('#btn-top-create-post, #btn-dashboard-create-post, #btn-create-first-post');
+    if (createBtn) {
+      e.preventDefault();
+      switchView('editor', { post: null });
     }
   });
 
@@ -2186,8 +2198,15 @@ function handlePreviewPost(post) {
 // 10. INITIALIZATION
 // =============================================================================
 
-document.addEventListener('DOMContentLoaded', () => {
+function initApp() {
   attachEvents();
   handleRoute();
   fetchPosts();
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  // If document is already parsed or ready (e.g. module deferred loading)
+  initApp();
+}
