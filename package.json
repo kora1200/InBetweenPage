@@ -2,14 +2,8 @@
   "name": "pagestudio",
   "private": true,
   "version": "1.0.0",
-  "type": "module",
   "scripts": {
-    "dev": "node server.js",
-    "start": "node server.js",
     "build": "mkdir -p dist && cp index.html style.css app.js dist/",
-    "lint": "node -e \"console.log('Lint clean')\""
-  },
-  "dependencies": {
-    "express": "^4.21.2"
+    "lint": "echo 'clean'"
   }
 }
