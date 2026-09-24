@@ -2,8 +2,14 @@
   "name": "pagestudio",
   "private": true,
   "version": "1.0.0",
+  "type": "module",
   "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js",
     "build": "mkdir -p dist && cp index.html style.css app.js dist/",
     "lint": "echo 'clean'"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
   }
 }
